@@ -1,0 +1,19 @@
+{
+  "name": "gift-paradigm",
+  "version": "1.0.0",
+  "description": "a multisubject experiment using a gift-giving behavioral paradigm",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Kirstan Brodie",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.16.4",
+    "socket.io": "^2.1.1",
+    "uuid": "^3.3.2"
+  },
+  "devDependencies": {
+    "nodemon": "^1.18.6"
+  }
+}

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Gift Paradigm Multiplayer</title>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+	<script src="jspsych-6.0.5\jspsych.js"></script>
+    <script src="jspsych-6.0.5\plugins\jspsych-gift-animation.js"></script>
+    <script src="jspsych-6.0.5\plugins\jspsych-emotion-animation.js"></script>
+    <script src="jspsych-6.0.5\plugins\jspsych-instructions.js"></script>
+    <script src="jspsych-6.0.5\plugins\jspsych-multiple-sliders.js"></script>
+    <script src="jspsych-wait.js"></script>
+    <script src="snap.svg-min.js"></script>
+    <link href="jspsych-6.0.5\css\jspsych.css" rel="stylesheet" type="text/css"></link>
+	<link rel="stylesheet" href="wait-animation.css"></link>
+</head>
+<body> 
+  	<div id="waiting-for-start">
+	  <p style="text-align:center; font-size:18px; margin-top:75px;">Waiting for other players to join</p>
+    	<div class='spinner spinner-blk'><div class='bounce1'></div><div class='bounce2'></div><div class='bounce3'></div></div>
+  </div>
+  <div id="game-end" style='display: none; position: fixed; height:100%; width:100%; position: absolute; top:0; left:0; z-index:2000; background-color: #fff;'>
+	<p style="text-align:center; font-size:18px; margin-top:75px;">The other player has disconnected</p>
+  </div>
+</body>
+<script>
+document.oncontextmenu = function () { // Uses document as opposed to window for IE8 compatibility
+   return false;
+};
+
+document.addEventListener("contextmenu", function(e){ //disables right-click ability on page 
+  e.preventDefault();
+}, false);
+</script>
+<script>
+
+// Make connection
+var socket = io.connect('http://localhost:4000');
+
+//new code follows here
+
+var player_id;
+var session_id;
+
+socket.once('join-reply', function(data){
+  session_id = data.session_id;
+  jsPsych.data.addProperties({experiment_session: session_id});
+});
+socket.emit('join', {experiment: 'gift-paradigm', participants: 3});
+
+socket.on('start', function(data){
+  player_id = data.player_id;
+  console.log("started");
+  load_experiment();
+  /*socket.once('sync-reply', function(reply){
+    jsPsych.data.addProperties({player_id: player_id, subject_id: player_id + "-" + session_id});
+    load_experiment(); 
+  });*/
+});
+
+socket.on('end', function(){
+  $('#game-end').css('display','block'); 
+});
+
+function load_experiment(){
+  var timeline = [];
+
+  // add instructions
+  var instructions = {
+    type: 'instructions',
+    show_clickable_nav: true,
+    allow_keyboard: false,
+    pages: ["Hello!"]
+  };
+  
+  timeline.push(instructions);
+
+  // wait for everyone to finish the instructions
+  timeline.push({
+    type: 'wait'
+    //optional parameter: wait_message, if you want it to say something else
+  });
+
+
+  
+  // start experiment
+  start(timeline);
+}
+
+function hide_wait(){
+  $('#waiting-for-start').remove();
+}
+
+function start(timeline) {
+  hide_wait();
+  jsPsych.init({
+    timeline: timeline,
+    on_finish: function() { jsPsych.data.displayData(); }
+    /*,on_data_update: function(data) { //have to look into what this does
+      socket.emit('write-data',{
+          "collection": "competitive_sampling_exp_1",
+          "data": data
+      });
+    }*/
+  });
+}
+
+
+
+/* Plan: 
+
+1. Fill out consent form - is there a way to make this come first, before waiting room?
+	Maybe create a function to display the "waiting" animation and put it as the on_finish callback function of the consent form trial?
+	Also must bypass fork thing before entering into it
+2. Assign player id 
+3. Join waiting room
+4. Be assigned to a game iteration (groups of 3) and a player number within that iteration (1, 2, or 3)
+5. Save player IDs, player numbers, and game iteration number
+6. Show instructions (wait for all to finish) 
+7. Show environment
+8. Player turn: display their photo as anonymous with indiv broadcast, but to others, their photo is one of the real faces (use broadcasting) - but how to show to only one person/socket? https://stackoverflow.com/questions/11484418/socket-io-broadcast-to-certain-users, https://stackoverflow.com/questions/4647348/send-message-to-specific-client-with-socket-io-and-node-js/9818600
+9. Then indiv. broadcast the choosing of a recipient (how to assign keypresses for only one player?) https://github.com/socketio/socket.io/issues/2713, https://stackoverflow.com/questions/26080873/how-to-send-data-to-specific-client-in-a-specific-room-with-socket-io
+10. Then publicly emit the animation
+11. Then indiv broadcast the choosing of emotional response by recipient
+12. Then broadcast the emotional face for the other players
+13. Then repeat for other gift
+14. Then move on to next person's turn
+15. Save data and emit the mTurk code to all, close experiment
+
+*/
+
+</script>
+</html>
