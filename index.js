@@ -5,26 +5,16 @@ var uuid = require('uuid'); // generates unique identifiers
 
 // App setup
 var app = express();
-var server = require('http').Server(app); // new code - delete if reverting back to app.listen
-server.listen(4000, function(){ // new code - delete if reverting back to app.listen
+var server = require('http').Server(app); 
+server.listen(4000, function(){ 
 	console.log('listening to requests on port 4000')
 });
-
-/*var server = app.listen(4000, function(){ // old code, could switch back to this if needed
-	console.log('listening to requests on port 4000')
-});*/
 
 // Static files
 app.use(express.static('public'));
 
 // Socket set-up
 var io = socket(server);
-
-/*io.on('connection', function(socket){
-	console.log('made socket connection', socket.id)
-});*/ //old code here
-
-// new code follows here
 
 // rooms (simultaneous game instances)
 var rooms = {};
